@@ -1,4 +1,4 @@
-package br.com.felipefarias.webflux.controller.exceptions;
+package br.com.felipefarias.webflux.controller.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
