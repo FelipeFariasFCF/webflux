@@ -5,6 +5,7 @@ import br.com.felipefarias.webflux.mapper.UserMapper;
 import br.com.felipefarias.webflux.model.request.UserRequest;
 import br.com.felipefarias.webflux.model.response.UserResponse;
 import br.com.felipefarias.webflux.service.UserService;
+import br.com.felipefarias.webflux.service.exception.ObjectNotFoundException;
 import com.mongodb.reactivestreams.client.MongoClient;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -59,7 +60,7 @@ class UserControllerImplTest {
                 .body(fromValue(request))
                 .exchange()
                 .expectStatus().isCreated();
-        
+
         verify(service).save(any(UserRequest.class));
     }
 
@@ -102,6 +103,17 @@ class UserControllerImplTest {
 
         verify(service).findById(anyString());
         verify(mapper).toResponse(any(User.class));
+    }
+
+    @Test
+    @DisplayName("Test find by id endpoint with not found")
+    void testFindByIdWithNotFound() {
+        when(service.findById(anyString())).thenThrow(ObjectNotFoundException.class);
+
+        webTestClient.get().uri("/users/" + ID)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isNotFound();
     }
 
     @Test
@@ -151,6 +163,26 @@ class UserControllerImplTest {
     }
 
     @Test
-    void delete() {
+    @DisplayName("Test delete endpoint with success")
+    void testDeleteWithSuccess() {
+        when(service.delete(anyString())).thenReturn(Mono.just(User.builder().build()));
+
+        webTestClient.delete().uri("/users/" + ID)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isOk();
+
+        verify(service).delete(anyString());
+    }
+
+    @Test
+    @DisplayName("Test delete endpoint with not found")
+    void testDeleteWithNotFound() {
+        when(service.delete(anyString())).thenThrow(ObjectNotFoundException.class);
+
+        webTestClient.delete().uri("/users/" + ID)
+                .accept(MediaType.APPLICATION_JSON)
+                .exchange()
+                .expectStatus().isNotFound();
     }
 }
