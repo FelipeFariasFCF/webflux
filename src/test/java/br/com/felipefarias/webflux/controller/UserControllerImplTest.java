@@ -7,6 +7,7 @@ import br.com.felipefarias.webflux.model.response.UserResponse;
 import br.com.felipefarias.webflux.service.UserService;
 import br.com.felipefarias.webflux.service.exception.ObjectNotFoundException;
 import com.mongodb.reactivestreams.client.MongoClient;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,16 +51,23 @@ class UserControllerImplTest {
     @MockBean
     private MongoClient mongoClient;
 
+    private static UserRequest userRequest;
+    private static UserResponse userResponse;
+
+    @BeforeAll
+    static void start() {
+        userRequest = new UserRequest(NAME, EMAIL, PASSWORD);
+        userResponse = new UserResponse(ID, NAME, EMAIL, PASSWORD);
+    }
+
     @Test
     @DisplayName("Test endpoint save with success")
     void testSaveWithSuccess() {
-        final UserRequest request = new UserRequest(NAME, EMAIL, PASSWORD);
-
         when(service.save(any(UserRequest.class))).thenReturn(Mono.just(User.builder().build()));
 
         webTestClient.post().uri(BASE_URI)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(fromValue(request))
+                .body(fromValue(userRequest))
                 .exchange()
                 .expectStatus().isCreated();
 
@@ -69,11 +77,11 @@ class UserControllerImplTest {
     @Test
     @DisplayName("Test endpoint save with bad request")
     void testSaveWithBadRequest() {
-        final UserRequest request = new UserRequest(NAME.concat(" "), EMAIL, PASSWORD);
+        final UserRequest requestFailed = new UserRequest(NAME.concat(" "), EMAIL, PASSWORD);
 
         webTestClient.post().uri(BASE_URI)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(fromValue(request))
+                .body(fromValue(requestFailed))
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody()
@@ -88,8 +96,6 @@ class UserControllerImplTest {
     @Test
     @DisplayName("Test find by id endpoint with success")
     void testFindByIdWithSuccess() {
-        final UserResponse userResponse = new UserResponse(ID, NAME, EMAIL, PASSWORD);
-
         when(service.findById(anyString())).thenReturn(Mono.just(User.builder().build()));
         when(mapper.toResponse(any(User.class))).thenReturn(userResponse);
 
@@ -121,8 +127,6 @@ class UserControllerImplTest {
     @Test
     @DisplayName("Test find all endpoint with success")
     void testFindAllWithSuccess() {
-        final UserResponse userResponse = new UserResponse(ID, NAME, EMAIL, PASSWORD);
-
         when(service.findAll()).thenReturn(Flux.just(User.builder().build()));
         when(mapper.toResponse(any(User.class))).thenReturn(userResponse);
 
@@ -143,15 +147,12 @@ class UserControllerImplTest {
     @Test
     @DisplayName("Test update endpoint with success")
     void testUpdateWithSuccess() {
-        final UserResponse userResponse = new UserResponse(ID, NAME, EMAIL, PASSWORD);
-        final UserRequest request = new UserRequest(NAME, EMAIL, PASSWORD);
-
         when(service.update(anyString(), any(UserRequest.class))).thenReturn(Mono.just(User.builder().build()));
         when(mapper.toResponse(any(User.class))).thenReturn(userResponse);
 
         webTestClient.patch().uri(BASE_URI + "/" + ID)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(fromValue(request))
+                .body(fromValue(userRequest))
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
