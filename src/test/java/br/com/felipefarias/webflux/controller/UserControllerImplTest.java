@@ -30,6 +30,10 @@ import static org.springframework.web.reactive.function.BodyInserters.fromValue;
 @AutoConfigureWebTestClient
 class UserControllerImplTest {
 
+    public static final String ID = "123456";
+    public static final String NAME = "Felipe";
+    public static final String EMAIL = "felipe@mail.com";
+    public static final String PASSWORD = "123456";
     @Autowired
     private WebTestClient webTestClient;
 
@@ -45,7 +49,7 @@ class UserControllerImplTest {
     @Test
     @DisplayName("Test endpoint save with success")
     void testSaveWithSuccess() {
-        UserRequest request = new UserRequest("Felipe", "felipe@mail.com", "123456");
+        UserRequest request = new UserRequest(NAME, EMAIL, PASSWORD);
 
         when(service.save(any(UserRequest.class))).thenReturn(Mono.just(User.builder().build()));
 
@@ -60,7 +64,7 @@ class UserControllerImplTest {
     @Test
     @DisplayName("Test endpoint save with bad request")
     void testSaveWithBadRequest() {
-        UserRequest request = new UserRequest(" Felipe ", "felipe@mail.com", "123456");
+        UserRequest request = new UserRequest(NAME.concat(" "), EMAIL, PASSWORD);
 
         webTestClient.post().uri("/users")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -79,19 +83,18 @@ class UserControllerImplTest {
     @Test
     @DisplayName("Test find by id endpoint with success")
     void testFindByIdWithSuccess() {
-        final String id = "123456";
-        final UserResponse userResponse = new UserResponse(id, "Felipe", "felipe@mail.com", "123456");
+        final UserResponse userResponse = new UserResponse(ID, NAME, EMAIL, PASSWORD);
         when(service.findById(anyString())).thenReturn(Mono.just(User.builder().build()));
         when(mapper.toResponse(any(User.class))).thenReturn(userResponse);
-        webTestClient.get().uri("/users/" + id)
+        webTestClient.get().uri("/users/" + ID)
                 .accept(MediaType.APPLICATION_JSON)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.id").isEqualTo(id)
-                .jsonPath("$.name").isEqualTo("Felipe")
-                .jsonPath("$.email").isEqualTo("felipe@mail.com")
-                .jsonPath("$.password").isEqualTo("123456");
+                .jsonPath("$.id").isEqualTo(ID)
+                .jsonPath("$.name").isEqualTo(NAME)
+                .jsonPath("$.email").isEqualTo(EMAIL)
+                .jsonPath("$.password").isEqualTo(PASSWORD);
     }
 
     @Test
